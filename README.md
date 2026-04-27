@@ -43,7 +43,7 @@ src/
 - full : 전체 내용 요약
 
 ## 요약 api
-- 백엔드 연결시 USE_MOCK = false 로 바꾸기
+- 백엔드 연결시 ResultsPage.jsx에 setTimeout 블록을 교체
 
 ## 디스코드 api 
-- setTimeout 이라는 mock 로직이 있으므로 그 부분을 변경하면댐
+- HomePage.jsx에 setTimeout 블록이라는 mock 로직이 있으므로 그 부분을 교체
