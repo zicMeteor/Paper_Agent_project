@@ -168,6 +168,7 @@ function HomePage() {
                     className={`discord-connect-btn ${connectingDiscord ? 'loading' : ''}`}
                     onClick={() => {
                       setConnectingDiscord(true)
+
                       // 디스코드 mock 제거
                       setTimeout(() => {
                         setDiscordConnected(true)
@@ -197,8 +198,8 @@ function HomePage() {
                       className={`discord-test-btn ${testingDiscord ? 'testing' : ''}`}
                       onClick={() => {
                         setTestingDiscord(true)
-                        
-                        // 디스코드 mock
+
+                        // 실제로 Discord에 메시지를 보내지 않고 전송 완료된 것처럼 보이는 mock
                         setTimeout(() => setTestingDiscord(false), 1500)
                       }}
                       disabled={testingDiscord}

@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import './ResultsPage.css'
 
-// 백엔드 없이 화면을 테스트하기 위한 가짜 논문 데이터 목록
+// mock 가짜 논문 데이터
 const MOCK_PAPERS = [
   {
     id: 1,
@@ -167,7 +167,7 @@ function ResultsPage() {
       return
     }
 
-    // 검색 버튼을 누르면 가짜 논문 데이터를 불러오는 척하며 1.2초간 로딩 화면을 보여줌
+    // 검색 버튼을 누르면 가짜 논문 데이터를 불러오는 mock 로직
     const timer = setTimeout(() => {
       const shuffled = [...MOCK_PAPERS].sort(() => Math.random() - 0.5)
       setPapers(shuffled.slice(0, resultCount || 5))
