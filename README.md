@@ -224,3 +224,24 @@ VITE_API_BASE_URL=https://api.ppa.dev
 VITE_DISCORD_CLIENT_ID=...
 VITE_SLACK_CLIENT_ID=...
 ```
+
+---
+
+## 업데이트 내역
+
+### 추가
+- `AgentStatusPage` — 에이전트 활성/일시정지 토글 버튼 (알림 미연결 시 disabled)
+- `AgentStatusPage` — 일시정지 원인별 안내 CTA 박스 (알림 미연결 vs 기타)
+- `DashboardPage` — 논문 요약 길이 설정(short/medium/full) 실제 반영
+- `DashboardPage` — 데이터 로딩 중 스켈레톤 shimmer UI
+- `src/api/` — API 레이어 분리 (`auth.js`, `papers.js`, `agent.js`)
+- `bookmarkStore` — `clearBookmarks()` 액션 추가
+
+### 버그 수정
+- `AgentStepper` — 취소 버튼 클릭 시 변경사항이 Zustand에 남던 버그 → 스냅샷 복원으로 수정
+- `AgentStepper` — 알림 연결 후 연결 버튼 재클릭 가능하던 버그 → `disabled` 처리
+- `AgentStepper` — 저장 후 LoadingPage에 메시지 미전달 수정
+- `LoadingPage` — `window.setTimeout` → `setTimeout`
+- `DashboardPage` — 트렌드 주별 데이터가 `mockStats`와 불일치하던 버그 수정
+- `Sidebar` / `ProfilePage` — 로그아웃 시 Zustand 스토어 미정리 버그 수정
+- `agentStatus.js` — 미사용 `STATUS_CONFIG` export 제거

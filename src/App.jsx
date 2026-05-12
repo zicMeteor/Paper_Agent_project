@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
-import LoginPage from './pages/LoginPage'
-import DashboardPage from './pages/DashboardPage'
+import LoginPage      from './pages/LoginPage'
+import DashboardPage  from './pages/DashboardPage'
 import AgentSetupPage from './pages/AgentSetupPage'
 import AgentStatusPage from './pages/AgentStatusPage'
-import ProfilePage from './pages/ProfilePage'
-import LoadingPage from './pages/LoadingPage'
-import Sidebar from './components/layout/Sidebar'
-import Topbar from './components/layout/Topbar'
+import ProfilePage    from './pages/ProfilePage'
+import LoadingPage    from './pages/LoadingPage'
+import Sidebar        from './components/layout/Sidebar'
+import Topbar         from './components/layout/Topbar'
 
 function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -38,14 +38,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login"   element={<LoginPage />} />
         <Route path="/loading" element={<LoadingPage />} />
         <Route path="/" element={<ProtectedRoute />}>
           <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="agent" element={<AgentSetupPage />} />
+          <Route path="dashboard"    element={<DashboardPage />} />
+          <Route path="agent"        element={<AgentSetupPage />} />
           <Route path="agent/status" element={<AgentStatusPage />} />
-          <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile"      element={<ProfilePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

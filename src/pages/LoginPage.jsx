@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import styles from './LoginPage.module.css'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -11,30 +12,15 @@ export default function LoginPage() {
   return (
     <div className="grid min-h-screen grid-cols-1 lg:grid-cols-2">
       {/* Left — Brand panel */}
-      <section
-        className="relative flex flex-col justify-between overflow-hidden p-10 lg:p-14"
-        style={{
-          background: 'linear-gradient(135deg, #111111 0%, #1c1c1e 60%, #2a1a1f 100%)',
-        }}
-      >
-        {/* Subtle accent glow */}
-        <div
-          className="pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full opacity-20 blur-3xl"
-          style={{ background: 'var(--accent)' }}
-        />
+      <section className={`relative flex flex-col justify-between overflow-hidden p-10 lg:p-14 ${styles.brandPanel}`}>
+        <div className={`pointer-events-none absolute -bottom-32 -left-32 h-80 w-80 rounded-full opacity-20 blur-3xl ${styles.glow}`} />
 
-        <span
-          className="animate-fade-up text-2xl font-semibold tracking-tight text-white"
-          style={{ letterSpacing: '-0.03em' }}
-        >
+        <span className="animate-fade-up text-2xl font-semibold tracking-tight text-white" style={{ letterSpacing: '-0.03em' }}>
           PPA
         </span>
 
         <div>
-          <p
-            className="animate-fade-up-1 mb-4 text-4xl font-normal leading-tight text-white lg:text-5xl"
-            style={{ letterSpacing: '-0.03em' }}
-          >
+          <p className="animate-fade-up-1 mb-4 text-4xl font-normal leading-tight text-white lg:text-5xl" style={{ letterSpacing: '-0.03em' }}>
             키워드만 설정하면<br />
             PPA가 매일 논문을<br />
             수집하고 정리합니다.
@@ -46,30 +32,18 @@ export default function LoginPage() {
       </section>
 
       {/* Right — Login panel */}
-      <section className="flex items-center justify-center px-8 py-16" style={{ background: 'var(--bg-card)' }}>
+      <section className={`flex items-center justify-center px-8 py-16 ${styles.loginPanel}`}>
         <div className="w-full max-w-sm">
           <div className="animate-fade-up mb-10">
-            <p
-              className="mb-2 text-3xl font-normal"
-              style={{ letterSpacing: '-0.02em', color: 'var(--text-primary)' }}
-            >
-              시작하기
-            </p>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Google 계정으로 바로 연결됩니다
-            </p>
+            <p className={`mb-2 text-3xl font-normal ${styles.heading}`}>시작하기</p>
+            <p className={`text-sm ${styles.subtext}`}>Google 계정으로 바로 연결됩니다</p>
           </div>
 
           <button
             type="button"
             onClick={handleGoogleLogin}
-            className="animate-fade-up-1 group flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3.5 text-sm font-medium transition-all duration-200 hover:shadow-md"
-            style={{
-              borderColor: 'var(--border)',
-              color: 'var(--text-primary)',
-            }}
+            className={`animate-fade-up-1 group flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3.5 text-sm font-medium transition-all duration-200 ${styles.googleBtn}`}
           >
-            {/* Google G icon */}
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -79,7 +53,7 @@ export default function LoginPage() {
             구글 연동하기
           </button>
 
-          <p className="animate-fade-up-2 mt-6 text-xs" style={{ color: 'var(--text-muted)' }}>
+          <p className={`animate-fade-up-2 mt-6 text-xs ${styles.footer}`}>
             추후 이메일 로그인 / 회원가입이 추가됩니다.
           </p>
         </div>

@@ -12,6 +12,8 @@ export const useBookmarkStore = create(
             ? state.bookmarks.filter((b) => b !== id)
             : [...state.bookmarks, id],
         })),
+
+      clearBookmarks: () => set({ bookmarks: [] }),
     }),
     {
       name: 'ppa-bookmarks',

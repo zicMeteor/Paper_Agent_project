@@ -1,32 +1,37 @@
 import { useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { useAgentStore } from '../store/agentStore'
+import { useAgentStore }    from '../store/agentStore'
 import { useBookmarkStore } from '../store/bookmarkStore'
-import { getAgentStatus } from '../utils/agentStatus'
-import { mockPapers, mockStats } from '../data/mock'
+import { getAgentStatus }   from '../utils/agentStatus'
+import { fetchPapers, fetchStats } from '../api/papers'
+import { mockStats } from '../data/mock'
 import { ArrowUpRight, ExternalLink, TrendingUp, BookOpen, Bookmark } from 'lucide-react'
+import styles from './DashboardPage.module.css'
+import { Line } from 'react-chartjs-2'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip as ChartTooltip,
+} from 'chart.js'
 
-// P2-1: 기간별 차트 mock 데이터 — 백엔드 연결 시 API 파라미터로 교체
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, ChartTooltip)
+
+// 백엔드 연결 시: fetchTrend(period) 로 교체
+// 주별은 mock.js의 trend/trendLabels와 동기화, 월별/년별은 독립 mock
 const TREND_SETS = {
-  '주별': {
-    data:   mockStats.trend,
-    labels: mockStats.trendLabels,
-  },
-  '월별': {
-    data:   [45, 88, 120, 95, 140, 185, 210, 178, 240, 290, 265, 340],
-    labels: ['7월', '8월', '9월', '10월', '11월', '12월', '1월', '2월', '3월', '4월', '5월', '6월'],
-  },
-  '년별': {
-    data:   [120, 340, 890, 1248],
-    labels: ['2021', '2022', '2023', '2024'],
-  },
+  '주별': { data: mockStats.trend, labels: mockStats.trendLabels },
+  '월별': { data: [45, 88, 120, 95, 140, 185, 210, 178, 240, 290, 265, 340], labels: ['7월','8월','9월','10월','11월','12월','1월','2월','3월','4월','5월','6월'] },
+  '년별': { data: [120, 340, 890, 1248], labels: ['2021','2022','2023','2024'] },
 }
 
 export default function DashboardPage() {
-  const [params]   = useSearchParams()
-  const tab        = params.get('tab') || 'total'
-  const { agent }  = useAgentStore()
-  const status     = getAgentStatus(agent)
+  const [params] = useSearchParams()
+  const tab      = params.get('tab') || 'total'
+  const { agent } = useAgentStore()
+  const status   = getAgentStatus(agent)
 
   if (status === 'unset') return <EmptyState />
 
@@ -39,74 +44,47 @@ export default function DashboardPage() {
   )
 }
 
-/* ── Empty state ─────────────────────────────────────── */
+/* ── Empty state ── */
 function EmptyState() {
   return (
     <div className="flex flex-1 items-center justify-center p-8">
-      <div
-        className="animate-fade-up w-full max-w-sm rounded-2xl p-8 text-center"
-        style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-      >
-        <div
-          className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
-          style={{ background: 'var(--accent-light)' }}
-        >
-          <BookOpen size={20} style={{ color: 'var(--accent)' }} />
+      <div className={`animate-fade-up w-full max-w-sm rounded-2xl p-8 text-center ${styles.card}`}>
+        <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl ${styles.emptyIcon}`}>
+          <BookOpen size={20} className={styles.emptyIconSvg} />
         </div>
-        <h2
-          className="mb-1.5 text-base font-medium"
-          style={{ letterSpacing: '-0.01em', color: 'var(--text-primary)' }}
-        >
-          아직 수집된 콘텐츠가 없습니다
-        </h2>
-        <p className="mb-6 text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+        <h2 className={`mb-1.5 text-base font-medium ${styles.emptyTitle}`}>아직 수집된 콘텐츠가 없습니다</h2>
+        <p className={`mb-6 text-sm leading-relaxed ${styles.emptyDesc}`}>
           에이전트를 설정하면 키워드에 맞는 논문을 자동으로 수집합니다.
         </p>
-        <Link
-          to="/agent"
-          className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85"
-          style={{ background: 'var(--accent)' }}
-        >
-          에이전트 설정
-          <ArrowUpRight size={14} />
+        <Link to="/agent" className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-85 ${styles.emptyBtn}`}>
+          에이전트 설정 <ArrowUpRight size={14} />
         </Link>
       </div>
     </div>
   )
 }
 
-/* ── Skeleton primitives ─────────────────────────────── */
+/* ── Skeleton ── */
 function SkeletonKpi() {
   return (
-    <div
-      className="rounded-xl p-3"
-      style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-    >
+    <div className={`rounded-xl p-3 ${styles.card}`}>
       <div className="skeleton-shimmer mb-2 h-3 w-16 rounded" />
       <div className="skeleton-shimmer mb-1.5 h-6 w-20 rounded" />
       <div className="skeleton-shimmer h-3 w-28 rounded" />
     </div>
   )
 }
-
-function SkeletonSection({ height = 100, label = true }) {
+function SkeletonSection({ height = 100 }) {
   return (
-    <div
-      className="rounded-xl p-4"
-      style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-    >
-      {label && <div className="skeleton-shimmer mb-3 h-3.5 w-20 rounded" />}
+    <div className={`rounded-xl p-4 ${styles.card}`}>
+      <div className="skeleton-shimmer mb-3 h-3.5 w-20 rounded" />
       <div className="skeleton-shimmer rounded-lg" style={{ height }} />
     </div>
   )
 }
-
 function SkeletonPaperRow({ first = false }) {
   return (
-    <div
-      className="flex items-start gap-3 px-4 py-3"
-      style={{ borderTop: first ? 'none' : 'var(--border-width) solid var(--border)' }}
-    >
+    <div className={`flex items-start gap-3 px-4 py-3 ${first ? '' : styles.rowDivider}`}>
       <div className="flex-1 space-y-1.5">
         <div className="skeleton-shimmer h-3.5 w-3/4 rounded" />
         <div className="skeleton-shimmer h-3 w-1/2 rounded" />
@@ -116,15 +94,26 @@ function SkeletonPaperRow({ first = false }) {
   )
 }
 
-/* ── Total tab ──────────────────────────────────────── */
+/* ── Total tab ── */
 function TotalPage({ agent }) {
   const [trendPeriod, setTrendPeriod] = useState('주별')
+  const [papers, setPapers]           = useState([])
+  const [stats,  setStats]            = useState(null)
   const [isLoading, setIsLoading]     = useState(true)
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 800)
-    return () => clearTimeout(t)
-  }, [])
+    let cancelled = false
+    Promise.all([
+      fetchPapers({ limit: agent.collectCount || 5, sort: 'latest' }),
+      fetchStats(),
+    ]).then(([paperData, statsData]) => {
+      if (cancelled) return
+      setPapers(paperData)
+      setStats(statsData)
+      setIsLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [agent.collectCount])
 
   if (isLoading) {
     return (
@@ -133,14 +122,8 @@ function TotalPage({ agent }) {
           <SkeletonKpi /><SkeletonKpi /><SkeletonKpi />
         </div>
         <SkeletonSection height={120} />
-        <div
-          className="overflow-hidden rounded-xl"
-          style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-        >
-          <div
-            className="px-4 py-3"
-            style={{ borderBottom: 'var(--border-width) solid var(--border)' }}
-          >
+        <div className={`overflow-hidden rounded-xl ${styles.card}`}>
+          <div className={`px-4 py-3 ${styles.cardHeader}`}>
             <div className="skeleton-shimmer h-3.5 w-20 rounded" />
           </div>
           {[...Array(5)].map((_, i) => <SkeletonPaperRow key={i} first={i === 0} />)}
@@ -150,38 +133,24 @@ function TotalPage({ agent }) {
   }
 
   return (
-    <div className="space-y-2 animate-fade-up">
+    <div className="animate-fade-up space-y-2">
       {/* KPI row */}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        <KpiCard
-          label="총 수집"
-          value={mockStats.totalPapers.toLocaleString()}
-          caption={`이번주 ${mockStats.weeklyAdded}개 추가`}
-        />
-        <KpiCard
-          label="이번주 신규"
-          value={mockStats.weeklyAdded}
-          caption={`지난주 대비 ${mockStats.weeklyGrowth}`}
-          positive
-        />
-        <div
-          className="rounded-xl p-3 transition-shadow duration-200 hover:shadow-sm"
-          style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-        >
-          <p className="mb-2 text-xs font-medium" style={{ color: 'var(--text-secondary)' }}>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <KpiCard label="총 수집" value={stats.totalPapers.toLocaleString()} caption="이번주" captionHighlight={`+${stats.weeklyAdded}`} hero />
+        <KpiCard label="이번주 신규" value={stats.weeklyAdded} caption={`지난주 대비 ${stats.weeklyGrowth}`} positive />
+        <div className={`rounded-xl p-3 ${styles.card}`}>
+          <p className={`mb-2 text-xs font-medium ${styles.kpiLabel}`}>
             인기 키워드 TOP3
-            <span className="ml-1.5" style={{ color: 'var(--text-muted)' }}>이번 주</span>
+            <span className={`ml-1.5 ${styles.kpiKeywordMeta}`}>이번 주</span>
           </p>
           <div className="space-y-1.5">
-            {mockStats.topKeywords.map((item, i) => (
+            {stats.topKeywords.map((item, i) => (
               <div key={item.label} className="flex items-center justify-between">
                 <span className="text-sm">
-                  <span className="mr-1.5 font-medium" style={{ color: 'var(--accent)' }}>{i + 1}</span>
-                  <span style={{ color: 'var(--text-primary)' }}>{item.label}</span>
+                  <span className={`mr-1.5 font-medium ${styles.kpiRankNum}`}>{i + 1}</span>
+                  <span className={styles.kpiRankLabel}>{item.label}</span>
                 </span>
-                <span className="text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                  {item.count}
-                </span>
+                <span className={`text-xs tabular-nums ${styles.kpiRankCount}`}>{item.count}</span>
               </div>
             ))}
           </div>
@@ -189,15 +158,12 @@ function TotalPage({ agent }) {
       </div>
 
       {/* Trend chart */}
-      <section
-        className="rounded-xl p-4 transition-shadow duration-200 hover:shadow-sm"
-        style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-      >
-        <div className="mb-3 flex items-center justify-between">
+      <section className={`rounded-xl p-5 ${styles.card}`}>
+        <div className="mb-5 flex items-start justify-between">
           <div>
-            <h2 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>수집 트렌드</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {trendPeriod === '주별' ? '최근 12주' : trendPeriod === '월별' ? '최근 12개월' : '연도별'} 논문 수집 추이
+            <h2 className={`text-sm font-medium ${styles.trendTitle}`}>수집 트렌드</h2>
+            <p className={`mt-0.5 text-xs ${styles.trendMeta}`}>
+              {trendPeriod === '주별' ? '최근 12주' : trendPeriod === '월별' ? '최근 12개월' : '연도별'} 논문 수집 추이 · 단위: 편
             </p>
           </div>
           <div className="flex gap-1">
@@ -205,12 +171,7 @@ function TotalPage({ agent }) {
               <button
                 key={l}
                 onClick={() => setTrendPeriod(l)}
-                className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors"
-                style={{
-                  background: trendPeriod === l ? 'var(--bg-dark)' : 'transparent',
-                  color: trendPeriod === l ? 'var(--text-on-dark)' : 'var(--text-muted)',
-                  border: trendPeriod === l ? 'none' : 'var(--border-width) solid var(--border)',
-                }}
+                className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${trendPeriod === l ? styles.trendPeriodActive : styles.trendPeriodInactive}`}
               >
                 {l}
               </button>
@@ -221,136 +182,121 @@ function TotalPage({ agent }) {
       </section>
 
       {/* Latest papers */}
-      <section
-        className="rounded-xl transition-shadow duration-200 hover:shadow-sm"
-        style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-      >
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ borderBottom: 'var(--border-width) solid var(--border)' }}
-        >
+      <section className={`rounded-xl ${styles.card}`}>
+        <div className={`flex items-center justify-between px-4 py-3 ${styles.cardHeader}`}>
           <div>
-            <h2 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>최신 논문</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              날짜 기준 최신 {agent.collectCount || 5}개
-            </p>
+            <h2 className={`text-sm font-medium ${styles.sectionTitle}`}>최신 논문</h2>
+            <p className={`text-xs ${styles.sectionMeta}`}>날짜 기준 최신 {agent.collectCount || 5}개</p>
           </div>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{mockStats.updatedAt}</span>
+          <span className={`text-xs ${styles.updatedAt}`}>{stats.updatedAt}</span>
         </div>
-        <PaperList papers={mockPapers.slice(0, agent.collectCount || 5)} showSummary />
+        <PaperList papers={papers} showSummary summaryLength={agent.summaryLength} />
       </section>
     </div>
   )
 }
 
-/* ── Popular tab ─────────────────────────────────────── */
+/* ── Popular tab ── */
 function PopularPage() {
-  const [newPeriod, setNewPeriod] = useState('7일')
+  const [newPeriod, setNewPeriod]   = useState('7일')
+  const [papers, setPapers]         = useState([])
+  const [isLoading, setIsLoading]   = useState(true)
 
-  const rising = [...mockPapers].sort((a, b) => b.growth - a.growth).slice(0, 3)
+  useEffect(() => {
+    let cancelled = false
+    fetchPapers({ limit: 20, sort: 'latest' }).then((data) => {
+      if (cancelled) return
+      setPapers(data)
+      setIsLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [])
 
+  if (isLoading) {
+    return (
+      <div className="animate-fade-up space-y-2">
+        <SkeletonSection height={120} />
+        <SkeletonSection height={200} />
+      </div>
+    )
+  }
+
+  const rising    = [...papers].sort((a, b) => b.growth - a.growth).slice(0, 3)
   const periodMap = { '1일': 1, '3일': 3, '7일': 7 }
-  const filteredNew = mockPapers.filter((p) => p.daysAgo <= periodMap[newPeriod])
+  const filteredNew = papers.filter((p) => p.daysAgo <= periodMap[newPeriod])
 
   return (
     <div className="animate-fade-up space-y-2">
       {/* 급상승 */}
-      <section
-        className="rounded-xl transition-shadow duration-200 hover:shadow-sm"
-        style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-      >
-        <div
-          className="flex items-center gap-2 px-4 py-3"
-          style={{ borderBottom: 'var(--border-width) solid var(--border)' }}
-        >
-          <TrendingUp size={14} style={{ color: 'var(--accent)' }} />
+      <section className={`rounded-xl ${styles.card}`}>
+        <div className={`flex items-center gap-2 px-4 py-3 ${styles.cardHeader}`}>
+          <TrendingUp size={14} className={styles.trendingIcon} />
           <div>
-            <h2 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>이번주 급상승</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>7일 기준 수집 증가율 높은 논문 3개</p>
+            <h2 className={`text-sm font-medium ${styles.sectionTitle}`}>이번주 급상승</h2>
+            <p className={`text-xs ${styles.sectionMeta}`}>7일 기준 수집 증가율 높은 논문 3개</p>
           </div>
         </div>
         <PaperList papers={rising} />
       </section>
 
       {/* 신규 수집 */}
-      <section
-        className="rounded-xl transition-shadow duration-200 hover:shadow-sm"
-        style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-      >
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ borderBottom: 'var(--border-width) solid var(--border)' }}
-        >
+      <section className={`rounded-xl ${styles.card}`}>
+        <div className={`flex items-center justify-between px-4 py-3 ${styles.cardHeader}`}>
           <div>
-            <h2 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>신규 수집</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              최근 {newPeriod} 이내 수집 {filteredNew.length}개
-            </p>
+            <h2 className={`text-sm font-medium ${styles.sectionTitle}`}>신규 수집</h2>
+            <p className={`text-xs ${styles.sectionMeta}`}>최근 {newPeriod} 이내 수집 {filteredNew.length}개</p>
           </div>
           <div className="flex gap-1">
             {['1일', '3일', '7일'].map((l) => (
               <button
                 key={l}
                 onClick={() => setNewPeriod(l)}
-                className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors"
-                style={{
-                  background: newPeriod === l ? 'var(--bg-dark)' : 'transparent',
-                  color: newPeriod === l ? 'var(--text-on-dark)' : 'var(--text-muted)',
-                  border: newPeriod === l ? 'none' : 'var(--border-width) solid var(--border)',
-                }}
+                className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${newPeriod === l ? styles.periodBtnActive : styles.periodBtnInactive}`}
               >
                 {l}
               </button>
             ))}
           </div>
         </div>
-        {filteredNew.length > 0 ? (
-          <PaperList papers={filteredNew} />
-        ) : (
-          <p className="px-4 py-6 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-            해당 기간 내 수집된 논문이 없습니다.
-          </p>
-        )}
+        {filteredNew.length > 0
+          ? <PaperList papers={filteredNew} />
+          : <p className={`px-4 py-6 text-center text-sm ${styles.emptyPeriod}`}>해당 기간 내 수집된 논문이 없습니다.</p>
+        }
       </section>
     </div>
   )
 }
 
-/* ── Archive tab ─────────────────────────────────────── */
+/* ── Archive tab ── */
 function ArchivePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [sortBy, setSortBy]       = useState('최신순')
+  const [papers, setPapers]       = useState([])
   const { bookmarks }             = useBookmarkStore()
+  const { agent }                 = useAgentStore()
 
   useEffect(() => {
-    const t = setTimeout(() => setIsLoading(false), 800)
-    return () => clearTimeout(t)
+    let cancelled = false
+    fetchPapers({ limit: 100 }).then((data) => {
+      if (cancelled) return
+      setPapers(data)
+      setIsLoading(false)
+    })
+    return () => { cancelled = true }
   }, [])
 
-  const bookmarkedPapers = mockPapers.filter((p) => bookmarks.includes(p.id))
-
-  const sortedPapers = [...bookmarkedPapers].sort((a, b) => {
-    if (sortBy === '인용순') {
-      return (
-        parseInt(b.citations.replace(/,/g, ''), 10) -
-        parseInt(a.citations.replace(/,/g, ''), 10)
-      )
-    }
-    // 최신순 — 'YYYY.MM.DD' 형식은 사전순 내림차순으로 날짜 비교 가능
-    return b.publishedAt.localeCompare(a.publishedAt)
-  })
+  const bookmarkedPapers = papers.filter((p) => bookmarks.includes(p.id))
+  const sortedPapers = [...bookmarkedPapers].sort((a, b) =>
+    sortBy === '인용순'
+      ? parseInt(String(b.citations).replace(/,/g, ''), 10) - parseInt(String(a.citations).replace(/,/g, ''), 10)
+      : b.publishedAt.localeCompare(a.publishedAt)
+  )
 
   if (isLoading) {
     return (
       <div className="animate-fade-up">
-        <div
-          className="overflow-hidden rounded-xl"
-          style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-        >
-          <div
-            className="flex items-center justify-between px-4 py-3"
-            style={{ borderBottom: 'var(--border-width) solid var(--border)' }}
-          >
+        <div className={`overflow-hidden rounded-xl ${styles.card}`}>
+          <div className={`flex items-center justify-between px-4 py-3 ${styles.cardHeader}`}>
             <div className="skeleton-shimmer h-3.5 w-20 rounded" />
             <div className="skeleton-shimmer h-6 w-24 rounded-lg" />
           </div>
@@ -362,35 +308,19 @@ function ArchivePage() {
 
   return (
     <div className="animate-fade-up">
-      <section
-        className="overflow-hidden rounded-xl transition-shadow duration-200 hover:shadow-sm"
-        style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-      >
-        {/* 헤더 */}
-        <div
-          className="flex items-center justify-between px-4 py-3"
-          style={{ borderBottom: 'var(--border-width) solid var(--border)' }}
-        >
+      <section className={`overflow-hidden rounded-xl ${styles.card}`}>
+        <div className={`flex items-center justify-between px-4 py-3 ${styles.cardHeader}`}>
           <div>
-            <h2 className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>내 보관함</h2>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              저장된 논문 {sortedPapers.length}개
-            </p>
+            <h2 className={`text-sm font-medium ${styles.archiveTitle}`}>내 보관함</h2>
+            <p className={`text-xs ${styles.archiveMeta}`}>저장된 논문 {sortedPapers.length}개</p>
           </div>
-
-          {/* 정렬 버튼 — 북마크 있을 때만 표시 */}
           {sortedPapers.length > 0 && (
             <div className="flex gap-1">
               {['최신순', '인용순'].map((l) => (
                 <button
                   key={l}
                   onClick={() => setSortBy(l)}
-                  className="rounded-lg px-2.5 py-1 text-xs font-medium transition-colors"
-                  style={{
-                    background: sortBy === l ? 'var(--bg-dark)' : 'transparent',
-                    color: sortBy === l ? 'var(--text-on-dark)' : 'var(--text-muted)',
-                    border: sortBy === l ? 'none' : 'var(--border-width) solid var(--border)',
-                  }}
+                  className={`rounded-lg px-2.5 py-1 text-xs font-medium transition-colors ${sortBy === l ? styles.periodBtnActive : styles.periodBtnInactive}`}
                 >
                   {l}
                 </button>
@@ -399,50 +329,45 @@ function ArchivePage() {
           )}
         </div>
 
-        {/* 빈 상태 */}
         {sortedPapers.length === 0 ? (
           <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
-            <div
-              className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl"
-              style={{ background: 'var(--accent-light)' }}
-            >
-              <Bookmark size={18} style={{ color: 'var(--accent)' }} />
+            <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${styles.archiveEmptyIcon}`}>
+              <Bookmark size={18} className={styles.archiveEmptyIconSvg} />
             </div>
-            <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              아직 저장된 논문이 없어요
-            </p>
-            <p className="mt-1 text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            <p className={`text-sm font-medium ${styles.archiveEmptyTitle}`}>아직 저장된 논문이 없어요</p>
+            <p className={`mt-1 text-xs leading-relaxed ${styles.archiveEmptyDesc}`}>
               논문 목록에서 북마크 아이콘을 눌러<br />보관함에 추가해보세요.
             </p>
           </div>
         ) : (
-          <PaperList papers={sortedPapers} showSummary />
+          <PaperList papers={sortedPapers} showSummary summaryLength={agent.summaryLength} />
         )}
       </section>
     </div>
   )
 }
 
-/* ── Sub-components ──────────────────────────────────── */
-function KpiCard({ label, value, caption, positive }) {
+/* ── Sub-components ── */
+function KpiCard({ label, value, caption, captionHighlight, positive, hero }) {
   return (
-    <div
-      className="rounded-xl p-3 transition-shadow duration-200 hover:shadow-sm"
-      style={{ background: 'var(--bg-card)', border: 'var(--border-width) solid var(--border)' }}
-    >
-      <p className="mb-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{label}</p>
+    <div className={`rounded-xl p-3 ${hero ? styles.kpiHeroCard : styles.card}`}>
+      <p className={`mb-2 text-xs ${styles.kpiLabel}`}>{label}</p>
       <p
-        className="tabular-nums font-medium"
+        className={`tabular-nums font-medium ${positive ? styles.kpiValuePositive : styles.kpiValueDefault}`}
         style={{
-          fontSize: 'clamp(20px, 2.2vw, 24px)',
-          letterSpacing: '-0.02em',
-          color: positive ? 'var(--status-active)' : 'var(--text-primary)',
-          lineHeight: 1.1,
+          fontSize: hero ? 'clamp(28px, 3vw, 32px)' : 'clamp(18px, 2vw, 22px)',
+          letterSpacing: '-0.03em',
+          lineHeight: 1.0,
         }}
       >
         {value}
       </p>
-      <p className="mt-1 text-xs" style={{ color: 'var(--text-muted)' }}>{caption}</p>
+      <p className={`mt-1.5 text-xs ${styles.kpiCaption}`}>
+        {caption}
+        {captionHighlight && (
+          <span className={`ml-1 font-medium ${styles.kpiCaptionHighlight}`}>{captionHighlight}</span>
+        )}
+      </p>
     </div>
   )
 }
@@ -450,175 +375,110 @@ function KpiCard({ label, value, caption, positive }) {
 function TrendChart({ period }) {
   const { data, labels } = TREND_SETS[period] ?? TREND_SETS['주별']
 
-  const VW = 560
-  const VH = 160
-  const PT = 12
-  const PB = 24
-  const PX = 4
+  const dataMax  = Math.max(...data)
+  const yMax     = Math.ceil((dataMax + 10) / 25) * 25
+  const stepSize = yMax <= 100 ? 25 : yMax <= 400 ? 100 : 250
 
-  const CH  = VH - PT - PB
-  const CW  = VW - PX * 2
-  const max = Math.max(...data)
-  const min = 0
+  const chartData = {
+    labels,
+    datasets: [{
+      data,
+      borderColor: '#5B5BD6',
+      borderWidth: 2.5,
+      tension: 0,
+      pointRadius: 3,
+      pointHoverRadius: 5,
+      pointBackgroundColor: '#5B5BD6',
+      pointBorderWidth: 0,
+      pointHoverBackgroundColor: '#5B5BD6',
+    }],
+  }
 
-  const toX = (i) => PX + (i / (data.length - 1)) * CW
-  const toY = (v) => PT + CH - ((v - min) / (max - min)) * CH
-
-  const linePoints = data.map((v, i) => `${toX(i)},${toY(v)}`).join(' ')
-  const areaPoints = `${linePoints} ${toX(data.length - 1)},${PT + CH} ${toX(0)},${PT + CH}`
-
-  const shownLabels = labels.length > 6
-    ? labels.filter((_, i) => i % 2 === 0)
-    : labels
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        backgroundColor: '#111111',
+        titleColor: 'rgba(255,255,255,0.55)',
+        bodyColor: '#ffffff',
+        titleFont: { size: 11, family: 'Pretendard' },
+        bodyFont: { size: 13, weight: '600', family: 'Pretendard' },
+        padding: { x: 12, y: 10 },
+        cornerRadius: 6,
+        displayColors: false,
+        callbacks: {
+          title: (items) => items[0].label,
+          label: (item)  => `수집 논문  ${item.parsed.y}편`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        offset: true,
+        grid: { display: false },
+        border: { display: false },
+        ticks: { color: '#6B7280', font: { size: 11, family: 'Pretendard' }, maxTicksLimit: 7, maxRotation: 0 },
+      },
+      y: {
+        min: 0,
+        max: yMax,
+        grid: { color: 'rgba(0,0,0,0.05)', drawTicks: false },
+        border: { display: false },
+        ticks: { color: '#6B7280', font: { size: 11, family: 'Pretendard' }, stepSize, padding: 10, callback: (v) => `${v}` },
+      },
+    },
+  }
 
   return (
-    <div className="overflow-hidden rounded-lg" style={{ background: 'var(--bg-primary)' }}>
-      <svg
-        viewBox={`0 0 ${VW} ${VH}`}
-        className="w-full"
-        style={{ height: VH }}
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="var(--accent)" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
-          </linearGradient>
-        </defs>
-
-        {[0.25, 0.5, 0.75].map((pct) => (
-          <line
-            key={pct}
-            x1={PX} y1={PT + CH * (1 - pct)}
-            x2={PX + CW} y2={PT + CH * (1 - pct)}
-            stroke="rgba(0,0,0,0.06)"
-            strokeWidth="0.5"
-            strokeDasharray="3,3"
-          />
-        ))}
-
-        <polygon points={areaPoints} fill="url(#trendGrad)" />
-
-        <polyline
-          fill="none"
-          stroke="var(--accent)"
-          strokeWidth="2"
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          points={linePoints}
-        />
-
-        {data.map((v, i) => {
-          const isLast = i === data.length - 1
-          if (!isLast && i % 2 !== 0) return null
-          return (
-            <circle
-              key={i}
-              cx={toX(i)}
-              cy={toY(v)}
-              r={isLast ? 4.5 : 3}
-              fill="var(--accent)"
-              fillOpacity={isLast ? 1 : 0.65}
-            />
-          )
-        })}
-
-        {shownLabels.map((label, idx) => {
-          const origIdx = labels.length > 6 ? idx * 2 : idx
-          return (
-            <text
-              key={label}
-              x={toX(origIdx)}
-              y={VH - 4}
-              textAnchor="middle"
-              fontSize="8"
-              fill="rgba(113,113,122,0.8)"
-              fontFamily="Pretendard, sans-serif"
-            >
-              {label}
-            </text>
-          )
-        })}
-      </svg>
+    <div className={`rounded-lg ${styles.chartBg}`} style={{ height: '240px', padding: '12px 8px 8px 0' }}>
+      <Line data={chartData} options={options} />
     </div>
   )
 }
 
-/* PaperList — 북마크 토글 버튼 포함 */
-function PaperList({ papers, showSummary = false }) {
+const SUMMARY_FIELD = { short: 'summaryShort', medium: 'summary', full: 'summaryFull' }
+
+function PaperList({ papers, showSummary = false, summaryLength = 'medium' }) {
   const { toggleBookmark, bookmarks } = useBookmarkStore()
+  const field = SUMMARY_FIELD[summaryLength] ?? 'summary'
 
   return (
     <div>
       {papers.map((paper, i) => {
         const isBookmarked = bookmarks.includes(paper.id)
         return (
-          /* group div: hover 상태 공유 + 북마크 버튼을 <a> 밖에 배치 */
           <div
             key={paper.id}
-            className="group relative"
-            style={{ borderTop: i === 0 ? 'none' : 'var(--border-width) solid var(--border)' }}
+            className={`group relative ${styles.paperRow} ${i > 0 ? styles.rowDivider : ''}`}
           >
-            <a
-              href={paper.url}
-              target="_blank"
-              rel="noreferrer"
-              className="flex items-start gap-3 px-4 py-3 pr-9 transition-colors hover:bg-gray-50/60"
-            >
-              <div className="flex-1 min-w-0">
-                <h3
-                  className="mb-0.5 text-sm font-medium leading-snug transition-colors group-hover:text-[var(--accent)]"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {paper.title}
-                </h3>
+            <a href={paper.url} target="_blank" rel="noreferrer" className="flex items-start gap-3 px-4 py-3 pr-9">
+              <div className="min-w-0 flex-1">
+                <h3 className={`mb-0.5 text-sm font-medium leading-snug ${styles.paperTitle}`}>{paper.title}</h3>
                 {showSummary && (
-                  <p className="mb-1 text-xs leading-relaxed line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                    {paper.summary}
-                  </p>
+                  <p className={`mb-1 line-clamp-2 text-xs leading-relaxed ${styles.paperSummary}`}>{paper[field] || paper.summary}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                    {paper.authors.join(', ')} · {paper.publishedAt}
-                  </span>
+                  <span className={`text-xs ${styles.paperMeta}`}>{paper.authors.join(', ')} · {paper.publishedAt}</span>
                   {paper.keywords.map((kw) => (
-                    <span
-                      key={kw}
-                      className="rounded px-1.5 py-0.5 text-xs font-medium"
-                      style={{ background: 'var(--accent-light)', color: 'var(--accent)' }}
-                    >
-                      {kw}
-                    </span>
+                    <span key={kw} className={`rounded px-1.5 py-0.5 text-xs font-medium ${styles.keyword}`}>{kw}</span>
                   ))}
                 </div>
-                <p className="mt-0.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-                  {paper.journal} · 인용 {paper.citations}
-                </p>
+                <p className={`mt-0.5 text-xs ${styles.paperJournal}`}>{paper.journal} · 인용 {paper.citations}</p>
               </div>
-              <ExternalLink
-                size={12}
-                className="mt-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-40"
-                style={{ color: 'var(--text-muted)' }}
-              />
+              <ExternalLink size={12} className={`mt-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-40 ${styles.externalIcon}`} />
             </a>
 
-            {/* 북마크 버튼 — <a> 밖에 위치시켜 클릭 시 링크 이동 없음 */}
             <button
               type="button"
               onClick={() => toggleBookmark(paper.id)}
               className={`absolute right-3 top-3 rounded p-0.5 transition-all duration-150 ${
-                isBookmarked
-                  ? 'opacity-100'
-                  : 'opacity-0 group-hover:opacity-50 hover:!opacity-100'
+                isBookmarked ? styles.bookmarkBtnActive : styles.bookmarkBtn
               }`}
-              style={{ color: isBookmarked ? 'var(--accent)' : 'var(--text-muted)' }}
               title={isBookmarked ? '보관함에서 제거' : '보관함에 추가'}
             >
-              <Bookmark
-                size={13}
-                fill={isBookmarked ? 'var(--accent)' : 'none'}
-                strokeWidth={1.5}
-              />
+              <Bookmark size={13} fill={isBookmarked ? 'var(--accent)' : 'none'} strokeWidth={1.5} />
             </button>
           </div>
         )

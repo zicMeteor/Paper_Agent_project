@@ -28,6 +28,9 @@
   --accent-hover: #a04e5f;
   --accent-light: rgba(184, 92, 110, 0.10);
 
+  /* Chart — 데이터 시각화 전용 (분석툴 신뢰감) */
+  --chart-line: #5B5BD6;
+
   /* Status — 시맨틱 컬러 토큰 (§12 Topbar, AgentStepper 공유) */
   --status-active:      #16a34a;
   --status-active-bg:   rgba(34, 197, 94, 0.10);
@@ -73,9 +76,14 @@
   button, input { font: inherit; }
   button { cursor: pointer; }
 
+  /* 키보드 탐색 시에만 focus ring 표시 */
   *:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
+  }
+  /* 마우스 클릭으로 포커스된 모든 요소: outline 제거 */
+  *:focus:not(:focus-visible) {
+    outline: none;
   }
 }
 
